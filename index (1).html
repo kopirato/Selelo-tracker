@@ -5,30 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Selelo Business Smart Tracker</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f0f0; color: #000; transition: all 0.3s ease; }
-  body.dark { background: #121212; color: #fff; }
-  h1 { text-align: center; margin-bottom: 10px; }
-  .container { max-width: 950px; margin: auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 0 15px #ccc; transition: all 0.3s ease; }
-  body.dark .container { background: #1e1e1e; box-shadow: 0 0 15px #000; }
-  label { display: block; margin: 10px 0 5px; font-weight: bold; }
-  input, select { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #ccc; }
-  body.dark input, body.dark select { background: #333; border: 1px solid #555; color: #fff; }
-  button { padding: 10px 20px; margin-top: 10px; cursor: pointer; border: none; border-radius: 6px; background: #4CAF50; color: #fff; font-weight: bold; }
-  button:hover { background: #45a049; }
-  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-  th { background: #eee; }
-  body.dark th { background: #333; }
-  body.dark td, body.dark th { border-color: #555; }
-  .dashboard { display: flex; justify-content: space-between; margin-top: 20px; flex-wrap: wrap; }
-  .card { background: #f7f7f7; padding: 15px; border-radius: 8px; width: 30%; text-align: center; box-shadow: 0 0 5px #aaa; margin-bottom: 10px; transition: all 0.3s ease; }
-  body.dark .card { background: #2c2c2c; box-shadow: 0 0 5px #000; }
-  canvas { margin-top: 20px; background: #fff; border-radius: 8px; padding: 10px; }
-  body.dark canvas { background: #2c2c2c; }
-  .export-btn { background: #2196F3; margin-top: 10px; }
-  .export-btn:hover { background: #1976D2; }
-  .theme-btn { background: #FF9800; margin-top: 10px; margin-left: 10px; }
-  .theme-btn:hover { background: #e68900; }
+  body { font-family: Arial, sans-serif; margin:0; padding:20px; background:#f0f0f0; color:#000; transition:0.3s; }
+  body.dark { background:#121212; color:#fff; }
+  h1 { text-align:center; margin-bottom:10px; }
+  .container { max-width:950px; margin:auto; background:#fff; padding:20px; border-radius:12px; box-shadow:0 0 15px #ccc; transition:0.3s; }
+  body.dark .container { background:#1e1e1e; box-shadow:0 0 15px #000; }
+  label { display:block; margin:10px 0 5px; font-weight:bold; }
+  input, select { width:100%; padding:8px; margin-bottom:10px; border-radius:6px; border:1px solid #ccc; }
+  body.dark input, body.dark select { background:#333; border:1px solid #555; color:#fff; }
+  button { padding:10px 20px; margin-top:10px; cursor:pointer; border:none; border-radius:6px; background:#4CAF50; color:#fff; font-weight:bold; }
+  button:hover { background:#45a049; }
+  table { width:100%; border-collapse:collapse; margin-top:20px; }
+  th, td { border:1px solid #ccc; padding:8px; text-align:left; }
+  th { background:#eee; }
+  body.dark th { background:#333; }
+  body.dark td, body.dark th { border-color:#555; }
+  .dashboard { display:flex; justify-content:space-between; margin-top:20px; flex-wrap:wrap; }
+  .card { background:#f7f7f7; padding:15px; border-radius:8px; width:30%; text-align:center; box-shadow:0 0 5px #aaa; margin-bottom:10px; transition:0.3s; }
+  body.dark .card { background:#2c2c2c; box-shadow:0 0 5px #000; }
+  canvas { margin-top:20px; background:#fff; border-radius:8px; padding:10px; }
+  body.dark canvas { background:#2c2c2c; }
+  .export-btn { background:#2196F3; margin-top:10px; }
+  .export-btn:hover { background:#1976D2; }
+  .theme-btn { background:#FF9800; margin-top:10px; margin-left:10px; }
+  .theme-btn:hover { background:#e68900; }
   #reportDiv { margin-top:15px; padding:10px; border:1px solid #ccc; border-radius:8px; }
 </style>
 </head>
@@ -51,6 +51,7 @@
 
   <label for="category">Category</label>
   <select id="category">
+    <option value="Sales">Sales</option>
     <option value="Other Income">Other Income</option>
     <option value="Food">Food</option>
     <option value="Transport">Transport</option>
@@ -121,30 +122,32 @@
 let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
 let isDark = false;
 
+// Theme toggle
 function toggleTheme() {
   isDark = !isDark;
   document.body.classList.toggle('dark', isDark);
 }
 
+// Add transaction
 function addTransaction() {
   const date = document.getElementById('date').value;
   const type = document.getElementById('type').value;
   const category = document.getElementById('category').value;
   const amount = parseFloat(document.getElementById('amount').value);
   if(!date || !amount) return alert("Enter valid date and amount");
-
   transactions.push({date,type,category,amount});
   localStorage.setItem('transactions', JSON.stringify(transactions));
-  document.getElementById('date').value = '';
-  document.getElementById('amount').value = '';
+  document.getElementById('date').value='';
+  document.getElementById('amount').value='';
   renderTransactions();
 }
 
+// Render transactions table and dashboard
 function renderTransactions() {
   const table = document.getElementById('transactionTable');
-  table.innerHTML = '';
+  table.innerHTML='';
   const filterMonth = document.getElementById('filterMonth').value;
-  let totalIncome=0, totalExpense=0;
+  let totalIncome=0,totalExpense=0;
 
   transactions.forEach(t=>{
     if(filterMonth && !t.date.startsWith(filterMonth)) return;
@@ -157,13 +160,14 @@ function renderTransactions() {
 
   document.getElementById('totalIncome').innerText = totalIncome;
   document.getElementById('totalExpense').innerText = totalExpense;
-  document.getElementById('balance').innerText = totalIncome - totalExpense;
+  document.getElementById('balance').innerText = totalIncome-totalExpense;
 
   if(totalExpense>totalIncome) alert("Warning: Expenses exceed Income!");
 
   renderCharts();
 }
 
+// Render charts
 function renderCharts(){
   const income = transactions.filter(t=>t.type==='Income').reduce((a,b)=>a+b.amount,0);
   const expense = transactions.filter(t=>t.type==='Expense').reduce((a,b)=>a+b.amount,0);
@@ -208,42 +212,27 @@ function renderLineChart(id,labels,incomeData,expenseData){
   });
 }
 
+// Mobile-friendly CSV export
 function exportCSV(){
+  if(transactions.length===0) return alert("No transactions to export!");
   let csv='Date,Type,Category,Amount\n';
-  transactions.forEach(t=>{ csv+=`${t.date},${t.type},${t.category},${t.amount}\n`; });
-  const blob = new Blob([csv],{type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url; a.download='transactions.csv'; a.click();
+  transactions.forEach(t=>{ csv+=`"${t.date}","${t.type}","${t.category}","${t.amount}"\n`; });
+
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  if(navigator.msSaveBlob){ navigator.msSaveBlob(blob,'transactions.csv'); }
+  else{
+    const url = URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='transactions.csv';
+    document.body.appendChild(a);
+    if(navigator.userAgent.match(/iPhone|iPad|iPod|Safari/i)) window.location.href=url;
+    else a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),100);
+  }
 }
 
-// P&L Report
+// Monthly P&L Report
 function generateReport(){
-  const month = document.getElementById('reportMonth').value;
-  if(!month) return alert("Select a month");
-
-  const filtered = transactions.filter(t=>t.date.startsWith(month));
-  let totalIncome=0,totalExpense=0;
-  const categoryData={};
-
-  filtered.forEach(t=>{
-    if(t.type==='Income') totalIncome+=t.amount;
-    if(t.type==='Expense') totalExpense+=t.amount;
-    categoryData[t.category]=(categoryData[t.category]||0)+t.amount;
-  });
-
-  document.getElementById('reportTitle').innerText=`P&L Statement for ${month}`;
-  document.getElementById('reportIncome').innerText=`Total Income: ${totalIncome}`;
-  document.getElementById('reportExpense').innerText=`Total Expenses: ${totalExpense}`;
-  document.getElementById('reportBalance').innerText=`Net Profit/Balance: ${totalIncome-totalExpense}`;
-
-  let breakdownHtml='<h4>Category Breakdown:</h4><ul>';
-  for(const cat in categoryData) breakdownHtml+=`<li>${cat}: ${categoryData[cat]}</li>`;
-  breakdownHtml+='</ul>';
-  document.getElementById('reportCategoryBreakdown').innerHTML=breakdownHtml;
-}
-
-function downloadPDF(){
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  const title
+  const month =
