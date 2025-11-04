@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Selelo Business Smart Tracker</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f0f0; color: #000; transition: all 0.3s ease; }
+  body.dark { background: #121212; color: #fff; }
+  h1 { text-align: center; margin-bottom: 10px; }
+  .container { max-width: 950px; margin: auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 0 15px #ccc; transition: all 0.3s ease; }
+  body.dark .container { background: #1e1e1e; box-shadow: 0 0 15px #000; }
+  label { display: block; margin: 10px 0 5px; font-weight: bold; }
+  input, select { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #ccc; }
+  body.dark input, body.dark select { background: #333; border: 1px solid #555; color: #fff; }
+  button { padding: 10px 20px; margin-top: 10px; cursor: pointer; border: none; border-radius: 6px; background: #4CAF50; color: #fff; font-weight: bold; }
+  button:hover { background: #45a049; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  th { background: #eee; }
+  body.dark th { background: #333; }
+  body.dark td, body.dark th { border-color: #555; }
+  .dashboard { display: flex; justify-content: space-between; margin-top: 20px; flex-wrap: wrap; }
+  .card { background: #f7f7f7; padding: 15px; border-radius: 8px; width: 30%; text-align: center; box-shadow: 0 0 5px #aaa; margin-bottom: 10px; transition: all 0.3s ease; }
+  body.dark .card { background: #2c2c2c; box-shadow: 0 0 5px #000; }
+  canvas { margin-top: 20px; background: #fff; border-radius: 8px; padding: 10px; }
+  body.dark canvas { background: #2c2c2c; }
+  .export-btn { background: #2196F3; margin-top: 10px; }
+  .export-btn:hover { background: #1976D2; }
+  .theme-btn { background: #FF9800; margin-top: 10px; margin-left: 10px; }
+  .theme-btn:hover { background: #e68900; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Selelo Business Smart Tracker</h1>
+  
+  <button class="theme-btn" onclick="toggleTheme()">Toggle Dark/Light Theme</button>
+  
+  <h2>Add Transaction</h2>
+  <label for="date">Date</label>
+  <input type="date" id="date" required>
+  
+  <label for="type">Transaction Type</label>
+  <select id="type">
+    <option value="Income">Income</option>
+    <option value="Expense">Expense</option>
+  </select>
+  
+  <label for="category">Category</label>
+  <select id="category">
+    <option value="Sales">Sales</option>
+    <option value="Other Income">Other Income</option>
+    <option value="Food">Food</option>
+    <option value="Transport">Transport</option>
+    <option value="Supplies">Supplies</option>
+    <option value="Other Expense">Other Expense</option>
+  </select>
+  
+  <label for="amount">Amount</label>
+  <input type="number" id="amount" placeholder="0" required>
+  
+  <button onclick="addTransaction()">Add Transaction</button>
+  
+  <h2>Filter by Month</h2>
+  <input type="month" id="filterMonth" onchange="renderTransactions()">
+
+  <div class="dashboard">
+    <div class="card">
+      <h3>Total Income</h3>
+      <p id="totalIncome">0</p>
+    </div>
+    <div class="card">
+      <h3>Total Expenses</h3>
+      <p id="totalExpense">0</p>
+    </div>
+    <div class="card">
+      <h3>Balance</h3>
+      <p id="balance">0</p>
+    </div>
+  </div>
+
+  <canvas id="incomeExpenseChart" width="400" height="200"></canvas>
+  <canvas id="categoryChart" width="400" height="200"></canvas>
+  <canvas id="monthlyTrendChart" width="400" height="200"></canvas>
+
+  <button class="export-btn" onclick="exportCSV()">Export Transactions CSV</button>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Category</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody id="transactionTable">
+    </tbody>
+  </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+let isDark = false;
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.body.classList.toggle('dark', isDark);
+}
+
+function addTransaction() {
+  const date = document.getElementById('date').value;
+  const type = document.getElementById('type').value;
+  const category = document.getElementById('category').value;
+  const amount = parseFloat(document.getElementById('amount').value);
+
+  if (!date || !amount) { alert('Please enter valid date and amount.'); return; }
+
+  transactions.push({ date, type, category, amount });
+  localStorage.setItem('transactions', JSON.stringify(transactions));
+  document.getElementById('date').value = '';
+  document.getElementById('amount').value = '';
+  
+  renderTransactions();
+}
+
+function renderTransactions() {
+  const table = document.getElementById('transactionTable');
+  table.innerHTML = '';
+  const filterMonth = document.getElementById('filterMonth').value;
+  let totalIncome = 0, totalExpense = 0;
+
+  transactions.forEach(t => {
+    if (filterMonth && !t.date.startsWith(filterMonth)) return;
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${t.date}</td><td>${t.type}</td><td>${t.category}</td><td>${t.amount}</td>`;
+    table.appendChild(row);
+    if (t.type === 'Income') totalIncome += t.amount;
+    if (t.type === 'Expense') totalExpense += t.amount;
+  });
+
+  document.getElementById('totalIncome').innerText = totalIncome;
+  document.getElementById('totalExpense').innerText = totalExpense;
+  document.getElementById('balance').innerText = totalIncome - totalExpense;
+
+  if(totalExpense > totalIncome) alert("Warning: Expenses exceed Income!");
+
+  renderCharts();
+}
+
+function renderCharts() {
+  const income = transactions.filter(t=>t.type==='Income').reduce((a,b)=>a+b.amount,0);
+  const expense = transactions.filter(t=>t.type==='Expense').reduce((a,b)=>a+b.amount,0);
+  renderDoughnutChart('incomeExpenseChart', ['Income','Expenses'], [income,expense], ['#4CAF50','#FF5252']);
+
+  const categoryData = {};
+  transactions.forEach(t=>{ categoryData[t.category] = (categoryData[t.category]||0)+t.amount; });
+  renderDoughnutChart('categoryChart', Object.keys(categoryData), Object.values(categoryData), undefined);
+
+  const monthlyData = {};
+  transactions.forEach(t=>{
+    const month = t.date.slice(0,7);
+    if(!monthlyData[month]) monthlyData[month]={Income:0,Expense:0};
+    monthlyData[month][t.type] += t.amount;
+  });
+  const months = Object.keys(monthlyData).sort();
+  const incomeArr = months.map(m=>monthlyData[m].Income);
+  const expenseArr = months.map(m=>monthlyData[m].Expense);
+  renderLineChart('monthlyTrendChart', months, incomeArr, expenseArr);
+}
+
+function renderDoughnutChart(id, labels, data, colors) {
+  const ctx = document.getElementById(id).getContext('2d');
+  if (window[id]) window[id].destroy();
+  window[id] = new Chart(ctx, {
+    type:'doughnut',
+    data:{labels, datasets:[{data, backgroundColor: colors || Chart.helpers.color(Chart.defaults.color)}]},
+    options:{responsive:true, plugins:{legend:{position:'bottom'}}}
+  });
+}
+
+function renderLineChart(id, labels, incomeData, expenseData){
+  const ctx = document.getElementById(id).getContext('2d');
+  if(window[id]) window[id].destroy();
+  window[id] = new Chart(ctx,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Income', data:incomeData, borderColor:'#4CAF50', backgroundColor:'rgba(76, 175, 80,0.2)'},
+        {label:'Expense', data:expenseData, borderColor:'#FF5252', backgroundColor:'rgba(255,82,82,0.2)'}
+      ]
+    },
+    options:{responsive:true, plugins:{legend:{position:'bottom'}}, tension:0.3}
+  });
+}
+
+function exportCSV() {
+  let csv = 'Date,Type,Category,Amount\n';
+  transactions.forEach(t => { csv += `${t.date},${t.type},${t.category},${t.amount}\n`; });
+  const blob = new Blob([csv], { type:'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download='transactions.csv'; a.click();
+}
+
+renderTransactions();
+</script>
+
+</body>
+  </html>
