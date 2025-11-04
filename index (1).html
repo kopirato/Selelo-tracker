@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Selelo Business Smart Tracker</title>
 <style>
-  /* Reset & base */
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f4f7f6; color:#1c1c1c; transition:0.3s; }
+  body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f4f7f6; color:#1c1c1c; transition:0.3s; }
   body.dark { background:#121212; color:#fff; }
   h1,h2,h3 { text-align:center; margin:10px 0; font-weight:600; }
   h2 { font-size:1.5em; }
@@ -100,6 +99,7 @@
         <th>Type</th>
         <th>Category</th>
         <th>Amount</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody id="transactionTable"></tbody>
@@ -115,48 +115,80 @@
     <p id="reportBalance"></p>
     <div id="reportCategoryBreakdown"></div>
   </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <script>
 let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
 let isDark = false;
+const adminPasswords = ["0742147197", "+254 721 235005"];
 
-function toggleTheme() { isDark = !isDark; document.body.classList.toggle('dark', isDark); }
+function toggleTheme(){ isDark=!isDark; document.body.classList.toggle('dark',isDark); }
 
+// Add transaction with admin password prompt
 function addTransaction(){
+  const adminPass = prompt("Enter your admin password:");
+  if(!adminPass || !adminPasswords.includes(adminPass.trim())){
+    alert("Incorrect admin password. Transaction not added.");
+    return;
+  }
+
   const date=document.getElementById('date').value;
   const type=document.getElementById('type').value;
   const category=document.getElementById('category').value;
   const amount=parseFloat(document.getElementById('amount').value);
+
   if(!date||!amount) return;
+
   transactions.push({date,type,category,amount});
   localStorage.setItem('transactions',JSON.stringify(transactions));
   renderTransactions();
-  document.getElementById('date').value=''; document.getElementById('amount').value='';
+
+  document.getElementById('date').value=''; 
+  document.getElementById('amount').value='';
 }
 
+// Render transactions table with delete button
 function renderTransactions(){
   const table=document.getElementById('transactionTable');
   table.innerHTML='';
   const filter=document.getElementById('filterMonth').value;
-  let totalIncome=0,totalExpense=0;
-  transactions.forEach(t=>{
+  let totalIncome=0, totalExpense=0;
+
+  transactions.forEach((t,index)=>{
     if(filter && !t.date.startsWith(filter)) return;
     const row=document.createElement('tr');
-    row.innerHTML=`<td>${t.date}</td><td>${t.type}</td><td>${t.category}</td><td>${t.amount}</td>`;
+    row.innerHTML=`<td>${t.date}</td><td>${t.type}</td><td>${t.category}</td><td>${t.amount}</td>
+      <td><button onclick="deleteTransaction(${index})" style="background:#FF5252;color:#fff;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;">Delete</button></td>`;
     table.appendChild(row);
     if(t.type==='Income') totalIncome+=t.amount;
     if(t.type==='Expense') totalExpense+=t.amount;
   });
+
   document.getElementById('totalIncome').innerText=totalIncome;
   document.getElementById('totalExpense').innerText=totalExpense;
   document.getElementById('balance').innerText=totalIncome-totalExpense;
   renderCharts();
 }
 
+// Delete transaction with admin password
+function deleteTransaction(index){
+  const adminPass = prompt("Enter your admin password to delete:");
+  if(!adminPass || !adminPasswords.includes(adminPass.trim())){
+    alert("Incorrect admin password. Cannot delete.");
+    return;
+  }
+
+  if(confirm("Are you sure you want to delete this transaction?")){
+    transactions.splice(index,1);
+    localStorage.setItem('transactions',JSON.stringify(transactions));
+    renderTransactions();
+  }
+}
+
+// Charts
 function renderCharts(){
   const income=transactions.filter(t=>t.type==='Income').reduce((a,b)=>a+b.amount,0);
   const expense=transactions.filter(t=>t.type==='Expense').reduce((a,b)=>a+b.amount,0);
@@ -185,8 +217,5 @@ function renderLine(id,labels,income,expense){
   window[id]=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Income',data:income,borderColor:'#4CAF50',backgroundColor:'rgba(76,175,80,0.2)',tension:0.3},{label:'Expense',data:expense,borderColor:'#FF5252',backgroundColor:'rgba(255,82,82,0.2)',tension:0.3}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}});
 }
 
-function exportCSV(){
-  if(!transactions.length) return;
-  let csv='Date,Type,Category,Amount\n';
-  transactions.forEach(t=>{ csv+=`"${t.date}","${t.type}","${t.category}","${t.amount}"\n`; });
-  const blob=new
+// CSV Export
+function export
